@@ -59,6 +59,23 @@ const useThreeScene = ({ onInit }: UseThreeSceneOptions = {}) => {
     rendererRef.current.setSize(width, height);
   }, [width, height]);
 
+  // Fullscreen toggle on double click
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const toggleFullscreen = () => {
+      if (!document.fullscreenElement) {
+        canvas.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    };
+
+    canvas.addEventListener("dblclick", toggleFullscreen);
+    return () => canvas.removeEventListener("dblclick", toggleFullscreen);
+  }, []);
+
   // Animation cycle
   useEffect(() => {
     if (

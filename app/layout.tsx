@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import FloatingHomeButton from "@/components/floating-home-button";
 
 export const metadata: Metadata = {
   title: "Three.js Basics",
@@ -11,6 +12,7 @@ const RootLayout = ({ children }: LayoutProps<"/">) => {
     <html lang="en" className="h-screen">
       <body className="h-full flex flex-col">
         <main className="flex-1">{children}</main>
+        <FloatingHomeButton />
       </body>
     </html>
   );
