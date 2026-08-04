@@ -6,10 +6,13 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import useWindowDimensions from "@/hooks/use-window-dimensions";
 
 interface UseThreeSceneOptions {
+  fieldOfView?: number;
   onInit?: (scene: THREE.Scene, camera: THREE.PerspectiveCamera) => void;
 }
 
-const useThreeScene = ({ onInit }: UseThreeSceneOptions = {}) => {
+const useThreeScene = (
+  { fieldOfView, onInit }: UseThreeSceneOptions = { fieldOfView: 50 },
+) => {
   const { width, height } = useWindowDimensions();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -26,7 +29,7 @@ const useThreeScene = ({ onInit }: UseThreeSceneOptions = {}) => {
     sceneRef.current = new THREE.Scene();
 
     // Camera
-    cameraRef.current = new THREE.PerspectiveCamera(50, 1);
+    cameraRef.current = new THREE.PerspectiveCamera(fieldOfView, 1);
     cameraRef.current.position.set(1, 2, 3);
     sceneRef.current.add(cameraRef.current);
 

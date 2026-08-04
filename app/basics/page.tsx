@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-const BasicsScene = dynamic(() => import("./basics-scene"), {
+const BasicsScene = dynamic(() => import("../../components/basics-scene"), {
   ssr: false,
 });
 
