@@ -343,22 +343,16 @@ const BasicsScene: FC = () => {
   const { canvasRef } = useThreeScene({
     fieldOfView: 75,
     onInit: (scene) => {
-      guiRef.current = new GUI({ width: 400, title: "Basics" });
+      guiRef.current = new GUI({ width: 300, title: "Basics" });
 
-      // Axes helper
       const axesHelper = new THREE.AxesHelper();
-      scene.add(axesHelper);
+      const cube = getCube();
+      const sphere = getSphere();
+      const cone = getCone();
+
+      scene.add(axesHelper, cube, sphere, cone);
 
       guiRef.current?.add(axesHelper, "visible").name("Toggle axes helper");
-
-      const cube = getCube();
-      scene.add(cube);
-
-      const sphere = getSphere();
-      scene.add(sphere);
-
-      const cone = getCone();
-      scene.add(cone);
     },
   });
 
