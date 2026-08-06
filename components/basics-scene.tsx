@@ -22,6 +22,24 @@ interface DebugUiParams {
   pivotGroup: THREE.Group;
 }
 
+const addRotation = (euler: THREE.Euler) =>
+  gsap.to(euler, {
+    x: Math.PI,
+    y: Math.PI,
+    z: Math.PI,
+    duration: 1,
+    repeat: -1,
+    ease: "none",
+  });
+
+const addOrbitalRotation = (euler: THREE.Euler, orbit: "x" | "y" | "z") =>
+  gsap.to(euler, {
+    [orbit]: -Math.PI * 2,
+    duration: 3,
+    repeat: -1,
+    ease: "none",
+  });
+
 const BasicsScene: FC = () => {
   const guiRef = useRef<GUI | null>(null);
 
@@ -129,24 +147,6 @@ const BasicsScene: FC = () => {
     return folder;
   };
 
-  const addRotation = (euler: THREE.Euler) =>
-    gsap.to(euler, {
-      x: Math.PI,
-      y: Math.PI,
-      z: Math.PI,
-      duration: 1,
-      repeat: -1,
-      ease: "none",
-    });
-
-  const addOrbitalRotation = (euler: THREE.Euler, orbit: "x" | "y" | "z") =>
-    gsap.to(euler, {
-      [orbit]: -Math.PI * 2,
-      duration: 3,
-      repeat: -1,
-      ease: "none",
-    });
-
   const getCube = () => {
     const props = {
       orbit: "y" as const,
@@ -157,27 +157,22 @@ const BasicsScene: FC = () => {
       orbitalRotation: false,
     };
 
-    // Geometry
     const geometry = new THREE.BoxGeometry(0.35, 0.35, 0.35);
-
-    const material = new THREE.MeshBasicMaterial({
-      color: props.color,
-      transparent: true,
-      opacity: 0.5,
-    });
-    const wireframeMaterial = new THREE.MeshBasicMaterial({
-      color: props.wireframeColor,
-      wireframe: true,
-    });
-
+    const material = new THREE.MeshBasicMaterial();
+    const wireframeMaterial = new THREE.MeshBasicMaterial();
     const mesh = new THREE.Mesh(geometry, material);
     const wireframeMesh = new THREE.Mesh(geometry, wireframeMaterial);
-
-    mesh.position.set(0, 0, 1);
-    mesh.add(wireframeMesh);
-
     const pivotGroup = new THREE.Group();
+
+    mesh.add(wireframeMesh);
+    mesh.position.set(0, 0, 1);
     pivotGroup.add(mesh);
+
+    material.color = new THREE.Color(props.color);
+    material.transparent = true;
+    material.opacity = 0.5;
+    wireframeMaterial.color = new THREE.Color(props.wireframeColor);
+    wireframeMaterial.wireframe = true;
 
     // Debug UI
     const folder = addDebugUi({
@@ -222,31 +217,26 @@ const BasicsScene: FC = () => {
       orbitalRotation: false,
     };
 
-    // Geometry
     const geometry = new THREE.SphereGeometry(
       0.25,
       props.subdivision,
       props.subdivision,
     );
-
-    const material = new THREE.MeshBasicMaterial({
-      color: props.color,
-      transparent: true,
-      opacity: 0.5,
-    });
-    const wireframeMaterial = new THREE.MeshBasicMaterial({
-      color: props.wireframeColor,
-      wireframe: true,
-    });
-
+    const material = new THREE.MeshBasicMaterial();
+    const wireframeMaterial = new THREE.MeshBasicMaterial();
     const mesh = new THREE.Mesh(geometry, material);
     const wireframeMesh = new THREE.Mesh(geometry, wireframeMaterial);
-
-    mesh.position.set(0, 1, 0);
-    mesh.add(wireframeMesh);
-
     const pivotGroup = new THREE.Group();
+
+    mesh.add(wireframeMesh);
+    mesh.position.set(0, 1, 0);
     pivotGroup.add(mesh);
+
+    material.color = new THREE.Color(props.color);
+    material.transparent = true;
+    material.opacity = 0.5;
+    wireframeMaterial.color = new THREE.Color(props.wireframeColor);
+    wireframeMaterial.wireframe = true;
 
     // Debug UI
     const folder = addDebugUi({
@@ -288,27 +278,22 @@ const BasicsScene: FC = () => {
       orbitalRotation: false,
     };
 
-    // Geometry
     const geometry = new THREE.ConeGeometry(0.25, 0.45, props.subdivision);
-
-    const material = new THREE.MeshBasicMaterial({
-      color: props.color,
-      transparent: true,
-      opacity: 0.5,
-    });
-    const wireframeMaterial = new THREE.MeshBasicMaterial({
-      color: props.wireframeColor,
-      wireframe: true,
-    });
-
+    const material = new THREE.MeshBasicMaterial();
+    const wireframeMaterial = new THREE.MeshBasicMaterial();
     const mesh = new THREE.Mesh(geometry, material);
     const wireframeMesh = new THREE.Mesh(geometry, wireframeMaterial);
+    const pivotGroup = new THREE.Group();
 
     mesh.position.set(1, 0, 0);
     mesh.add(wireframeMesh);
-
-    const pivotGroup = new THREE.Group();
     pivotGroup.add(mesh);
+
+    material.color = new THREE.Color(props.color);
+    material.transparent = true;
+    material.opacity = 0.5;
+    wireframeMaterial.color = new THREE.Color(props.wireframeColor);
+    wireframeMaterial.wireframe = true;
 
     // Debug UI
     const folder = addDebugUi({
