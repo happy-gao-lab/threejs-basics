@@ -34,23 +34,23 @@ import { EXRLoader } from "three/addons/loaders/EXRLoader.js";
 import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
 import useThreeScene from "@/hooks/use-three-scene";
 
-import environmentMap from "@/assets/environment-maps/env-map.hdr";
+import environmentMap from "@/assets/textures/environment-maps/env-map.hdr";
 
-import sphereAmbientOcclusionMap from "@/assets/rattan-weave/ambient-occlusion.jpg";
-import sphereColorMap from "@/assets/rattan-weave/color.jpg";
-import sphereMetalnessMap from "@/assets/rattan-weave/metalness.jpg";
-import sphereNormalMap from "@/assets/rattan-weave/normal.png";
-import sphereRoughnessMap from "@/assets/rattan-weave/roughness.jpg";
-import sphereDisplacementMap from "@/assets/rattan-weave/displacement.png";
+import sphereAmbientOcclusionMap from "@/assets/textures/rattan-weave/ambient-occlusion.jpg";
+import sphereColorMap from "@/assets/textures/rattan-weave/color.jpg";
+import sphereMetalnessMap from "@/assets/textures/rattan-weave/metalness.jpg";
+import sphereNormalMap from "@/assets/textures/rattan-weave/normal.png";
+import sphereRoughnessMap from "@/assets/textures/rattan-weave/roughness.jpg";
+import sphereDisplacementMap from "@/assets/textures/rattan-weave/displacement.png";
 
-import matcap1 from "@/assets/matcaps/1.png";
-import matcap2 from "@/assets/matcaps/2.png";
-import matcap3 from "@/assets/matcaps/3.png";
+import matcap1 from "@/assets/textures/matcaps/1.png";
+import matcap2 from "@/assets/textures/matcaps/2.png";
+import matcap3 from "@/assets/textures/matcaps/3.png";
 
-import pebblesColorMap from "@/assets/pebbles/dry_river_pebbles_diff_2k.jpg";
-import pebblesDisplacementMap from "@/assets/pebbles/dry_river_pebbles_disp_2k.png";
-import pebblesNormalMap from "@/assets/pebbles/dry_river_pebbles_nor_gl_2k.exr";
-import pebblesRoughnessMap from "@/assets/pebbles/dry_river_pebbles_rough_2k.exr";
+import pebblesColorMap from "@/assets/textures/pebbles/dry_river_pebbles_diff_2k.jpg";
+import pebblesDisplacementMap from "@/assets/textures/pebbles/dry_river_pebbles_disp_2k.png";
+import pebblesNormalMap from "@/assets/textures/pebbles/dry_river_pebbles_nor_gl_2k.exr";
+import pebblesRoughnessMap from "@/assets/textures/pebbles/dry_river_pebbles_rough_2k.exr";
 
 const torusLabels: Record<number, string> = {
   1: "1: Basic + transparency",
