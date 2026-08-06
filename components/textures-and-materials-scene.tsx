@@ -1,7 +1,33 @@
 "use client";
 
 import { FC, RefObject, useEffect, useMemo, useRef } from "react";
-import * as THREE from "three";
+import {
+  AmbientLight,
+  Color,
+  DoubleSide,
+  Euler,
+  Group,
+  Mesh,
+  MeshBasicMaterial,
+  MeshDepthMaterial,
+  MeshLambertMaterial,
+  MeshMatcapMaterial,
+  MeshNormalMaterial,
+  MeshPhongMaterial,
+  MeshPhysicalMaterial,
+  MeshStandardMaterial,
+  MeshToonMaterial,
+  PerspectiveCamera,
+  PMREMGenerator,
+  PointLight,
+  Scene,
+  SRGBColorSpace,
+  Texture,
+  TextureLoader,
+  TorusGeometry,
+  Vector2,
+  WebGLRenderer,
+} from "three";
 import gsap from "gsap";
 import GUI from "lil-gui";
 import { EXRLoader } from "three/addons/loaders/EXRLoader.js";
@@ -42,7 +68,15 @@ const torusLabels: Record<number, string> = {
   13: "13: Physical + transmission",
 };
 
-const addRotation = (euler: THREE.Euler) =>
+const runWhenIdle = (callback: () => void) => {
+  if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+    window.requestIdleCallback(callback);
+  } else {
+    setTimeout(callback, 1);
+  }
+};
+
+const addRotation = (euler: Euler) =>
   gsap.to(euler, {
     x: -Math.PI,
     y: Math.PI,
@@ -56,10 +90,10 @@ const addRotation = (euler: THREE.Euler) =>
 // camera/pointLight are only known once useThreeScene's onInit runs, so they're read from refs at call time instead of being passed in directly.
 const useTorusRenderers = (
   guiRef: RefObject<GUI | null>,
-  cameraRef: RefObject<THREE.PerspectiveCamera | null>,
-  pointLightRef: RefObject<THREE.PointLight | null>,
+  cameraRef: RefObject<PerspectiveCamera | null>,
+  pointLightRef: RefObject<PointLight | null>,
 ) => {
-  const textureLoader = useMemo(() => new THREE.TextureLoader(), []);
+  const textureLoader = useMemo(() => new TextureLoader(), []);
 
   // MeshBasicMaterial ignores scene lighting entirely — color, opacity, and wireframe here are purely visual, not driven by any lighting model.
   const renderTorus1 = () => {
@@ -67,12 +101,12 @@ const useTorusRenderers = (
       color: 0xa71663,
     };
 
-    const geometry = new THREE.TorusGeometry(4, 2);
-    const material = new THREE.MeshBasicMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new TorusGeometry(4, 2);
+    const material = new MeshBasicMaterial();
+    const mesh = new Mesh(geometry, material);
 
-    material.color = new THREE.Color(props.color); // Create color object to apply it to the mesh
-    material.side = THREE.DoubleSide; // Render texture on the inner side of the mesh (longer to render)
+    material.color = new Color(props.color); // Create color object to apply it to the mesh
+    material.side = DoubleSide; // Render texture on the inner side of the mesh (longer to render)
     material.transparent = true;
     material.opacity = 0.5; // Doesn't work without transparent = true
 
@@ -94,9 +128,9 @@ const useTorusRenderers = (
 
   // MeshNormalMaterial. flatShading rebuilds the shader itself, not just a uniform — the GUI toggle only takes effect because onChange sets needsUpdate = true.
   const renderTorus2 = () => {
-    const geometry = new THREE.TorusGeometry(4, 2);
-    const material = new THREE.MeshNormalMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new TorusGeometry(4, 2);
+    const material = new MeshNormalMaterial();
+    const mesh = new Mesh(geometry, material);
 
     // Debug UI
     const folder = guiRef.current?.addFolder(torusLabels[2]);
@@ -121,19 +155,19 @@ const useTorusRenderers = (
     const matcapTexture2 = textureLoader.load(matcap2.src);
     const matcapTexture3 = textureLoader.load(matcap3.src);
 
-    matcapTexture1.colorSpace = THREE.SRGBColorSpace;
-    matcapTexture2.colorSpace = THREE.SRGBColorSpace;
-    matcapTexture3.colorSpace = THREE.SRGBColorSpace;
+    matcapTexture1.colorSpace = SRGBColorSpace;
+    matcapTexture2.colorSpace = SRGBColorSpace;
+    matcapTexture3.colorSpace = SRGBColorSpace;
 
-    const matcaps: Record<string, THREE.Texture> = {
+    const matcaps: Record<string, Texture> = {
       Metallic: matcapTexture1,
       "Pink-Orange": matcapTexture2,
       "Heavy Green": matcapTexture3,
     };
 
-    const geometry = new THREE.TorusGeometry(4, 2);
-    const material = new THREE.MeshMatcapMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new TorusGeometry(4, 2);
+    const material = new MeshMatcapMaterial();
+    const mesh = new Mesh(geometry, material);
 
     material.matcap = matcapTexture1;
 
@@ -155,9 +189,9 @@ const useTorusRenderers = (
   const renderTorus4 = () => {
     const camera = cameraRef.current!;
 
-    const geometry = new THREE.TorusGeometry(4, 2);
-    const material = new THREE.MeshDepthMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new TorusGeometry(4, 2);
+    const material = new MeshDepthMaterial();
+    const mesh = new Mesh(geometry, material);
 
     // Debug UI
     const folder = guiRef.current?.addFolder(torusLabels[4]);
@@ -189,9 +223,9 @@ const useTorusRenderers = (
   const renderTorus5 = () => {
     const pointLight = pointLightRef.current!;
 
-    const geometry = new THREE.TorusGeometry(4, 2);
-    const material = new THREE.MeshLambertMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new TorusGeometry(4, 2);
+    const material = new MeshLambertMaterial();
+    const mesh = new Mesh(geometry, material);
 
     // Debug UI
     const folder = guiRef.current?.addFolder(torusLabels[5]);
@@ -232,12 +266,12 @@ const useTorusRenderers = (
       color: 0xff0000,
     };
 
-    const geometry = new THREE.TorusGeometry(4, 2);
-    const material = new THREE.MeshPhongMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new TorusGeometry(4, 2);
+    const material = new MeshPhongMaterial();
+    const mesh = new Mesh(geometry, material);
 
-    material.color = new THREE.Color(props.color);
-    material.specular = new THREE.Color(props.specular);
+    material.color = new Color(props.color);
+    material.specular = new Color(props.specular);
     material.shininess = 200;
 
     // Debug UI
@@ -272,11 +306,11 @@ const useTorusRenderers = (
       color: 0x808080,
     };
 
-    const geometry = new THREE.TorusGeometry(4, 2);
-    const material = new THREE.MeshToonMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new TorusGeometry(4, 2);
+    const material = new MeshToonMaterial();
+    const mesh = new Mesh(geometry, material);
 
-    material.color = new THREE.Color(props.color);
+    material.color = new Color(props.color);
 
     // Debug UI
     const folder = guiRef.current?.addFolder(torusLabels[7]);
@@ -298,11 +332,11 @@ const useTorusRenderers = (
       color: 0x40964f,
     };
 
-    const geometry = new THREE.TorusGeometry(4, 2);
-    const material = new THREE.MeshStandardMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new TorusGeometry(4, 2);
+    const material = new MeshStandardMaterial();
+    const mesh = new Mesh(geometry, material);
 
-    material.color = new THREE.Color(props.color);
+    material.color = new Color(props.color);
     material.metalness = 1;
     material.roughness = 0;
 
@@ -344,17 +378,17 @@ const useTorusRenderers = (
       sphereAmbientOcclusionMap.src,
     );
 
-    colorTexture.colorSpace = THREE.SRGBColorSpace;
+    colorTexture.colorSpace = SRGBColorSpace;
 
-    const geometry = new THREE.TorusGeometry(4, 2, 256, 256);
-    const material = new THREE.MeshPhysicalMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new TorusGeometry(4, 2, 256, 256);
+    const material = new MeshPhysicalMaterial();
+    const mesh = new Mesh(geometry, material);
 
     material.map = colorTexture;
     material.aoMap = ambientOcclusionTexture;
     material.aoMapIntensity = 1;
     material.normalMap = normalTexture;
-    material.normalScale = new THREE.Vector2(0.5, 0.5);
+    material.normalScale = new Vector2(0.5, 0.5);
     material.metalnessMap = metalnessTexture;
     material.metalness = 1;
     material.roughnessMap = roughnessTexture;
@@ -417,11 +451,11 @@ const useTorusRenderers = (
     const roughnessTexture = exrLoader.load(pebblesRoughnessMap);
     const displacementTexture = textureLoader.load(pebblesDisplacementMap.src);
 
-    colorTexture.colorSpace = THREE.SRGBColorSpace;
+    colorTexture.colorSpace = SRGBColorSpace;
 
-    const geometry = new THREE.TorusGeometry(4, 2, 256, 256);
-    const material = new THREE.MeshPhysicalMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new TorusGeometry(4, 2, 256, 256);
+    const material = new MeshPhysicalMaterial();
+    const mesh = new Mesh(geometry, material);
 
     material.map = colorTexture;
     material.normalMap = normalTexture;
@@ -470,14 +504,14 @@ const useTorusRenderers = (
       sheenColor: 0xffffff,
     };
 
-    const geometry = new THREE.TorusGeometry(4, 2, 128, 128);
-    const material = new THREE.MeshPhysicalMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new TorusGeometry(4, 2, 128, 128);
+    const material = new MeshPhysicalMaterial();
+    const mesh = new Mesh(geometry, material);
 
     material.sheen = 1;
     material.sheenRoughness = 0.25;
     material.sheenColor.set(1, 1, 1);
-    material.color = new THREE.Color(props.color);
+    material.color = new Color(props.color);
 
     // Debug UI
     const folder = guiRef.current?.addFolder(torusLabels[11]);
@@ -514,11 +548,11 @@ const useTorusRenderers = (
       thicknessMax: 1000,
     };
 
-    const geometry = new THREE.TorusGeometry(4, 2);
-    const material = new THREE.MeshPhysicalMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new TorusGeometry(4, 2);
+    const material = new MeshPhysicalMaterial();
+    const mesh = new Mesh(geometry, material);
 
-    material.color = new THREE.Color(props.color);
+    material.color = new Color(props.color);
     material.iridescence = 1;
     material.iridescenceIOR = 1;
     material.iridescenceThicknessRange = [
@@ -582,11 +616,11 @@ const useTorusRenderers = (
       color: 0xffffff,
     };
 
-    const geometry = new THREE.TorusGeometry(4, 2);
-    const material = new THREE.MeshPhysicalMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
+    const geometry = new TorusGeometry(4, 2);
+    const material = new MeshPhysicalMaterial();
+    const mesh = new Mesh(geometry, material);
 
-    material.color = new THREE.Color(props.color);
+    material.color = new Color(props.color);
     material.transmission = 1;
     material.ior = 1.5;
     material.thickness = 0.5;
@@ -632,7 +666,7 @@ const useTorusRenderers = (
     return mesh;
   };
 
-  const renderers: Record<number, () => THREE.Mesh> = {
+  const renderers: Record<number, () => Mesh> = {
     1: renderTorus1,
     2: renderTorus2,
     3: renderTorus3,
@@ -653,20 +687,20 @@ const useTorusRenderers = (
 
 const TexturesAndMaterialsScene: FC = () => {
   const guiRef = useRef<GUI | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const pointLightRef = useRef<THREE.PointLight | null>(null);
+  const cameraRef = useRef<PerspectiveCamera | null>(null);
+  const pointLightRef = useRef<PointLight | null>(null);
 
   const renderers = useTorusRenderers(guiRef, cameraRef, pointLightRef);
 
   const addLight = () => {
     const distance = 5;
     const intensity = 200;
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+    const ambientLight = new AmbientLight(0xffffff, 1);
 
-    const pointLightXPos = new THREE.PointLight(0xffffff, intensity);
+    const pointLightXPos = new PointLight(0xffffff, intensity);
     pointLightXPos.position.set(distance, 0, 0);
 
-    const group = new THREE.Group();
+    const group = new Group();
 
     group.add(ambientLight, pointLightXPos);
 
@@ -674,10 +708,10 @@ const TexturesAndMaterialsScene: FC = () => {
   };
 
   const addEnvironment = (
-    scene: THREE.Scene,
-    renderer: THREE.WebGLRenderer,
+    scene: Scene,
+    renderer: WebGLRenderer,
   ) => {
-    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    const pmremGenerator = new PMREMGenerator(renderer);
     pmremGenerator.compileEquirectangularShader();
 
     new HDRLoader().load(environmentMap, (texture) => {
@@ -692,13 +726,13 @@ const TexturesAndMaterialsScene: FC = () => {
   };
 
   const setupTorusSwitcher = () => {
-    const group = new THREE.Group();
+    const group = new Group();
     const rotationTween = addRotation(group.rotation);
 
     // Only one torus exists (geometry/material/textures) at a time — switching disposes the previous one instead of just hiding it, so idle toruses cost nothing.
-    let activeMesh: THREE.Mesh | null = null;
+    let activeMesh: Mesh | null = null;
 
-    const disposeMesh = (mesh: THREE.Mesh) => {
+    const disposeMesh = (mesh: Mesh) => {
       mesh.geometry.dispose();
 
       const materials = Array.isArray(mesh.material)
@@ -707,7 +741,7 @@ const TexturesAndMaterialsScene: FC = () => {
 
       materials.forEach((material) => {
         Object.values(material).forEach((value) => {
-          if (value instanceof THREE.Texture) {
+          if (value instanceof Texture) {
             value.dispose();
           }
         });
@@ -763,7 +797,10 @@ const TexturesAndMaterialsScene: FC = () => {
 
       guiRef.current = new GUI({ width: 400, title: "Textures and Materials" });
 
-      addEnvironment(scene, renderer);
+      // The HDR environment map is a multi-MB download plus a PMREM
+      // compile — deferring it off the initial frame keeps that work from
+      // showing up as a single long blocking task right at startup.
+      runWhenIdle(() => addEnvironment(scene, renderer));
 
       const { group: lights, pointLight } = addLight();
       const torusSwitcherGroup = setupTorusSwitcher();
