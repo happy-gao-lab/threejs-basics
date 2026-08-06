@@ -1,7 +1,18 @@
 "use client";
 
 import { FC, useEffect, useRef } from "react";
-import * as THREE from "three";
+import {
+  Mesh,
+  BufferGeometry,
+  MeshBasicMaterial,
+  Group,
+  Euler,
+  BoxGeometry,
+  Color,
+  SphereGeometry,
+  ConeGeometry,
+  AxesHelper,
+} from "three";
 import gsap from "gsap";
 import GUI from "lil-gui";
 
@@ -17,12 +28,12 @@ interface DebugUiParams {
     ownRotation: boolean;
     orbitalRotation: boolean;
   };
-  mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
-  wireframeMesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
-  pivotGroup: THREE.Group;
+  mesh: Mesh<BufferGeometry, MeshBasicMaterial>;
+  wireframeMesh: Mesh<BufferGeometry, MeshBasicMaterial>;
+  pivotGroup: Group;
 }
 
-const addRotation = (euler: THREE.Euler) =>
+const addRotation = (euler: Euler) =>
   gsap.to(euler, {
     x: Math.PI,
     y: Math.PI,
@@ -32,7 +43,7 @@ const addRotation = (euler: THREE.Euler) =>
     ease: "none",
   });
 
-const addOrbitalRotation = (euler: THREE.Euler, orbit: "x" | "y" | "z") =>
+const addOrbitalRotation = (euler: Euler, orbit: "x" | "y" | "z") =>
   gsap.to(euler, {
     [orbit]: -Math.PI * 2,
     duration: 3,
@@ -157,21 +168,21 @@ const BasicsScene: FC = () => {
       orbitalRotation: false,
     };
 
-    const geometry = new THREE.BoxGeometry(0.35, 0.35, 0.35);
-    const material = new THREE.MeshBasicMaterial();
-    const wireframeMaterial = new THREE.MeshBasicMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
-    const wireframeMesh = new THREE.Mesh(geometry, wireframeMaterial);
-    const pivotGroup = new THREE.Group();
+    const geometry = new BoxGeometry(0.35, 0.35, 0.35);
+    const material = new MeshBasicMaterial();
+    const wireframeMaterial = new MeshBasicMaterial();
+    const mesh = new Mesh(geometry, material);
+    const wireframeMesh = new Mesh(geometry, wireframeMaterial);
+    const pivotGroup = new Group();
 
     mesh.add(wireframeMesh);
     mesh.position.set(0, 0, 1);
     pivotGroup.add(mesh);
 
-    material.color = new THREE.Color(props.color);
+    material.color = new Color(props.color);
     material.transparent = true;
     material.opacity = 0.5;
-    wireframeMaterial.color = new THREE.Color(props.wireframeColor);
+    wireframeMaterial.color = new Color(props.wireframeColor);
     wireframeMaterial.wireframe = true;
 
     // Debug UI
@@ -190,7 +201,7 @@ const BasicsScene: FC = () => {
       .step(2)
       .name("Detail")
       .onFinishChange(() => {
-        const newGeometry = new THREE.BoxGeometry(
+        const newGeometry = new BoxGeometry(
           0.35,
           0.35,
           0.35,
@@ -217,25 +228,25 @@ const BasicsScene: FC = () => {
       orbitalRotation: false,
     };
 
-    const geometry = new THREE.SphereGeometry(
+    const geometry = new SphereGeometry(
       0.25,
       props.subdivision,
       props.subdivision,
     );
-    const material = new THREE.MeshBasicMaterial();
-    const wireframeMaterial = new THREE.MeshBasicMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
-    const wireframeMesh = new THREE.Mesh(geometry, wireframeMaterial);
-    const pivotGroup = new THREE.Group();
+    const material = new MeshBasicMaterial();
+    const wireframeMaterial = new MeshBasicMaterial();
+    const mesh = new Mesh(geometry, material);
+    const wireframeMesh = new Mesh(geometry, wireframeMaterial);
+    const pivotGroup = new Group();
 
     mesh.add(wireframeMesh);
     mesh.position.set(0, 1, 0);
     pivotGroup.add(mesh);
 
-    material.color = new THREE.Color(props.color);
+    material.color = new Color(props.color);
     material.transparent = true;
     material.opacity = 0.5;
-    wireframeMaterial.color = new THREE.Color(props.wireframeColor);
+    wireframeMaterial.color = new Color(props.wireframeColor);
     wireframeMaterial.wireframe = true;
 
     // Debug UI
@@ -254,7 +265,7 @@ const BasicsScene: FC = () => {
       .step(1)
       .name("Detail")
       .onFinishChange(() => {
-        const newGeometry = new THREE.SphereGeometry(
+        const newGeometry = new SphereGeometry(
           0.25,
           props.subdivision,
           props.subdivision,
@@ -278,21 +289,21 @@ const BasicsScene: FC = () => {
       orbitalRotation: false,
     };
 
-    const geometry = new THREE.ConeGeometry(0.25, 0.45, props.subdivision);
-    const material = new THREE.MeshBasicMaterial();
-    const wireframeMaterial = new THREE.MeshBasicMaterial();
-    const mesh = new THREE.Mesh(geometry, material);
-    const wireframeMesh = new THREE.Mesh(geometry, wireframeMaterial);
-    const pivotGroup = new THREE.Group();
+    const geometry = new ConeGeometry(0.25, 0.45, props.subdivision);
+    const material = new MeshBasicMaterial();
+    const wireframeMaterial = new MeshBasicMaterial();
+    const mesh = new Mesh(geometry, material);
+    const wireframeMesh = new Mesh(geometry, wireframeMaterial);
+    const pivotGroup = new Group();
 
     mesh.position.set(1, 0, 0);
     mesh.add(wireframeMesh);
     pivotGroup.add(mesh);
 
-    material.color = new THREE.Color(props.color);
+    material.color = new Color(props.color);
     material.transparent = true;
     material.opacity = 0.5;
-    wireframeMaterial.color = new THREE.Color(props.wireframeColor);
+    wireframeMaterial.color = new Color(props.wireframeColor);
     wireframeMaterial.wireframe = true;
 
     // Debug UI
@@ -311,11 +322,7 @@ const BasicsScene: FC = () => {
       .step(1)
       .name("Detail")
       .onFinishChange(() => {
-        const newGeometry = new THREE.ConeGeometry(
-          0.25,
-          0.45,
-          props.subdivision,
-        );
+        const newGeometry = new ConeGeometry(0.25, 0.45, props.subdivision);
 
         mesh.geometry.dispose();
         mesh.geometry = newGeometry;
@@ -330,7 +337,7 @@ const BasicsScene: FC = () => {
     onInit: (scene) => {
       guiRef.current = new GUI({ width: 300, title: "Basics" });
 
-      const axesHelper = new THREE.AxesHelper();
+      const axesHelper = new AxesHelper();
       const cube = getCube();
       const sphere = getSphere();
       const cone = getCone();
