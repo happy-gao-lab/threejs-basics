@@ -2,10 +2,8 @@
 
 import { FC, RefObject, useEffect, useMemo, useRef } from "react";
 import {
-  AmbientLight,
   Color,
   DoubleSide,
-  Euler,
   Group,
   Mesh,
   MeshBasicMaterial,
@@ -18,39 +16,38 @@ import {
   MeshStandardMaterial,
   MeshToonMaterial,
   PerspectiveCamera,
-  PMREMGenerator,
   PointLight,
-  Scene,
   SRGBColorSpace,
   Texture,
   TextureLoader,
   TorusGeometry,
   Vector2,
-  WebGLRenderer,
 } from "three";
-import gsap from "gsap";
 import GUI from "lil-gui";
 import { EXRLoader } from "three/addons/loaders/EXRLoader.js";
-import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
 import useThreeScene from "@/hooks/use-three-scene";
+import { runWhenIdle } from "@/utils/idle";
+import { addRotation } from "@/utils/rotations";
+import { addEnvironment } from "@/utils/environment";
+import { addLights } from "@/utils/lights";
 
-import environmentMap from "@/assets/environment-maps/env-map.hdr";
+import environmentMap from "@/assets/textures/environment-maps/env-map.hdr";
 
-import sphereAmbientOcclusionMap from "@/assets/rattan-weave/ambient-occlusion.jpg";
-import sphereColorMap from "@/assets/rattan-weave/color.jpg";
-import sphereMetalnessMap from "@/assets/rattan-weave/metalness.jpg";
-import sphereNormalMap from "@/assets/rattan-weave/normal.png";
-import sphereRoughnessMap from "@/assets/rattan-weave/roughness.jpg";
-import sphereDisplacementMap from "@/assets/rattan-weave/displacement.png";
+import sphereAmbientOcclusionMap from "@/assets/textures/rattan-weave/ambient-occlusion.jpg";
+import sphereColorMap from "@/assets/textures/rattan-weave/color.jpg";
+import sphereMetalnessMap from "@/assets/textures/rattan-weave/metalness.jpg";
+import sphereNormalMap from "@/assets/textures/rattan-weave/normal.png";
+import sphereRoughnessMap from "@/assets/textures/rattan-weave/roughness.jpg";
+import sphereDisplacementMap from "@/assets/textures/rattan-weave/displacement.png";
 
-import matcap1 from "@/assets/matcaps/1.png";
-import matcap2 from "@/assets/matcaps/2.png";
-import matcap3 from "@/assets/matcaps/3.png";
+import matcap1 from "@/assets/textures/matcaps/1.png";
+import matcap2 from "@/assets/textures/matcaps/2.png";
+import matcap3 from "@/assets/textures/matcaps/3.png";
 
-import pebblesColorMap from "@/assets/pebbles/dry_river_pebbles_diff_2k.jpg";
-import pebblesDisplacementMap from "@/assets/pebbles/dry_river_pebbles_disp_2k.png";
-import pebblesNormalMap from "@/assets/pebbles/dry_river_pebbles_nor_gl_2k.exr";
-import pebblesRoughnessMap from "@/assets/pebbles/dry_river_pebbles_rough_2k.exr";
+import pebblesColorMap from "@/assets/textures/pebbles/dry_river_pebbles_diff_2k.jpg";
+import pebblesDisplacementMap from "@/assets/textures/pebbles/dry_river_pebbles_disp_2k.png";
+import pebblesNormalMap from "@/assets/textures/pebbles/dry_river_pebbles_nor_gl_2k.exr";
+import pebblesRoughnessMap from "@/assets/textures/pebbles/dry_river_pebbles_rough_2k.exr";
 
 const torusLabels: Record<number, string> = {
   1: "1: Basic + transparency",
@@ -67,24 +64,6 @@ const torusLabels: Record<number, string> = {
   12: "12: Physical + iridescence",
   13: "13: Physical + transmission",
 };
-
-const runWhenIdle = (callback: () => void) => {
-  if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-    window.requestIdleCallback(callback);
-  } else {
-    setTimeout(callback, 1);
-  }
-};
-
-const addRotation = (euler: Euler) =>
-  gsap.to(euler, {
-    x: -Math.PI,
-    y: Math.PI,
-    z: -Math.PI,
-    duration: 8,
-    repeat: -1,
-    ease: "none",
-  });
 
 // Renders one torus per material/texture concept and returns a lookup of index -> render function.
 // camera/pointLight are only known once useThreeScene's onInit runs, so they're read from refs at call time instead of being passed in directly.
@@ -151,25 +130,22 @@ const useTorusRenderers = (
   const renderTorus3 = () => {
     const props = { matcap: "Metallic" };
 
-    const matcapTexture1 = textureLoader.load(matcap1.src);
-    const matcapTexture2 = textureLoader.load(matcap2.src);
-    const matcapTexture3 = textureLoader.load(matcap3.src);
+    const matcapLabels = ["Metallic", "Pink-Orange", "Heavy Green"];
+    const matcapTextures = [matcap1, matcap2, matcap3].map((matcap) => {
+      const texture = textureLoader.load(matcap.src);
+      texture.colorSpace = SRGBColorSpace;
+      return texture;
+    });
 
-    matcapTexture1.colorSpace = SRGBColorSpace;
-    matcapTexture2.colorSpace = SRGBColorSpace;
-    matcapTexture3.colorSpace = SRGBColorSpace;
-
-    const matcaps: Record<string, Texture> = {
-      Metallic: matcapTexture1,
-      "Pink-Orange": matcapTexture2,
-      "Heavy Green": matcapTexture3,
-    };
+    const matcaps: Record<string, Texture> = Object.fromEntries(
+      matcapLabels.map((label, index) => [label, matcapTextures[index]]),
+    );
 
     const geometry = new TorusGeometry(4, 2);
     const material = new MeshMatcapMaterial();
     const mesh = new Mesh(geometry, material);
 
-    material.matcap = matcapTexture1;
+    material.matcap = matcaps[props.matcap];
 
     // Debug UI
     const folder = guiRef.current?.addFolder(torusLabels[3]);
@@ -692,42 +668,14 @@ const TexturesAndMaterialsScene: FC = () => {
 
   const renderers = useTorusRenderers(guiRef, cameraRef, pointLightRef);
 
-  const addLight = () => {
-    const distance = 5;
-    const intensity = 200;
-    const ambientLight = new AmbientLight(0xffffff, 1);
-
-    const pointLightXPos = new PointLight(0xffffff, intensity);
-    pointLightXPos.position.set(distance, 0, 0);
-
-    const group = new Group();
-
-    group.add(ambientLight, pointLightXPos);
-
-    return { group, pointLight: pointLightXPos };
-  };
-
-  const addEnvironment = (
-    scene: Scene,
-    renderer: WebGLRenderer,
-  ) => {
-    const pmremGenerator = new PMREMGenerator(renderer);
-    pmremGenerator.compileEquirectangularShader();
-
-    new HDRLoader().load(environmentMap, (texture) => {
-      const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-
-      scene.environment = envMap;
-      scene.background = envMap;
-
-      texture.dispose();
-      pmremGenerator.dispose();
-    });
-  };
-
   const setupTorusSwitcher = () => {
     const group = new Group();
-    const rotationTween = addRotation(group.rotation);
+    const rotationTween = addRotation(group.rotation, {
+      x: -Math.PI,
+      y: Math.PI,
+      z: -Math.PI,
+      duration: 8,
+    });
 
     // Only one torus exists (geometry/material/textures) at a time — switching disposes the previous one instead of just hiding it, so idle toruses cost nothing.
     let activeMesh: Mesh | null = null;
@@ -800,13 +748,13 @@ const TexturesAndMaterialsScene: FC = () => {
       // The HDR environment map is a multi-MB download plus a PMREM
       // compile — deferring it off the initial frame keeps that work from
       // showing up as a single long blocking task right at startup.
-      runWhenIdle(() => addEnvironment(scene, renderer));
+      runWhenIdle(() => addEnvironment(scene, renderer, environmentMap));
 
-      const { group: lights, pointLight } = addLight();
+      const { group: lights, pointLight1 } = addLights();
       const torusSwitcherGroup = setupTorusSwitcher();
 
       cameraRef.current = camera;
-      pointLightRef.current = pointLight;
+      pointLightRef.current = pointLight1;
 
       scene.add(lights, torusSwitcherGroup);
     },
