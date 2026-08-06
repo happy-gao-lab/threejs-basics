@@ -18,4 +18,6 @@ const RootLayout = ({ children }: LayoutProps<"/">) => {
   );
 };
 
+// http://localhost:3000/threejs-basics/
+
 export default RootLayout;

@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import * as THREE from "three";
+import { PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import useWindowDimensions from "@/hooks/use-window-dimensions";
 
 interface UseThreeSceneOptions {
   fieldOfView?: number;
   onInit?: (
-    scene: THREE.Scene,
-    camera: THREE.PerspectiveCamera,
-    renderer: THREE.WebGLRenderer,
+    scene: Scene,
+    camera: PerspectiveCamera,
+    renderer: WebGLRenderer,
   ) => void;
 }
 
@@ -20,9 +20,9 @@ const useThreeScene = (
   const { width, height } = useWindowDimensions();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const sceneRef = useRef<Scene | null>(null);
+  const cameraRef = useRef<PerspectiveCamera | null>(null);
+  const rendererRef = useRef<WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
 
   //   Scene, camera, renderer  initial setup
@@ -30,16 +30,16 @@ const useThreeScene = (
     if (!canvasRef.current) return;
 
     // Scene
-    sceneRef.current = new THREE.Scene();
+    sceneRef.current = new Scene();
 
     // Camera
-    cameraRef.current = new THREE.PerspectiveCamera(fieldOfView, 1);
+    cameraRef.current = new PerspectiveCamera(fieldOfView, 1);
 
     cameraRef.current.position.set(1, 2, 3);
     sceneRef.current.add(cameraRef.current);
 
     // Renderer
-    rendererRef.current = new THREE.WebGLRenderer({
+    rendererRef.current = new WebGLRenderer({
       canvas: canvasRef.current,
     });
 
