@@ -10,14 +10,11 @@ import {
   TextureLoader,
   SRGBColorSpace,
   Texture,
-  AmbientLight,
-  PointLight,
-  Group,
 } from "three";
-import gsap from "gsap";
 import GUI from "lil-gui";
 
 import useThreeScene from "@/hooks/use-three-scene";
+import { addLights } from "@/utils/lights";
 import {
   Font,
   FontData,
@@ -59,17 +56,6 @@ const TextScene: FC = () => {
 
   const fontLoader = useMemo(() => new FontLoader(), []);
   const textureLoader = useMemo(() => new TextureLoader(), []);
-
-  const addLight = () => {
-    const ambientLight = new AmbientLight(0xffffff, 1);
-    const pointLight = new PointLight(0xffffff, 200);
-    const group = new Group();
-
-    group.add(ambientLight, pointLight);
-    pointLight.position.set(5, 0, 5);
-
-    return group;
-  };
 
   const parseFonts = () => {
     bitcountFontRef.current = fontLoader.parse(
@@ -283,7 +269,7 @@ const TextScene: FC = () => {
       const lavishlyText = renderNormalText();
       const sekuyaText = renderMatcapText();
       const bitcountText = renderPhysicalText();
-      const lightsGroup = addLight();
+      const { group: lightsGroup } = addLights();
 
       scene.add(lavishlyText, sekuyaText, bitcountText, lightsGroup);
     },

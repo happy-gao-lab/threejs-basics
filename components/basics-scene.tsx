@@ -6,17 +6,16 @@ import {
   BufferGeometry,
   MeshBasicMaterial,
   Group,
-  Euler,
   BoxGeometry,
   Color,
   SphereGeometry,
   ConeGeometry,
   AxesHelper,
 } from "three";
-import gsap from "gsap";
 import GUI from "lil-gui";
 
 import useThreeScene from "@/hooks/use-three-scene";
+import { addRotation, addOrbitalRotation } from "@/utils/rotations";
 
 interface DebugUiParams {
   folderName: string;
@@ -33,24 +32,6 @@ interface DebugUiParams {
   pivotGroup: Group;
 }
 
-const addRotation = (euler: Euler) =>
-  gsap.to(euler, {
-    x: Math.PI,
-    y: Math.PI,
-    z: Math.PI,
-    duration: 1,
-    repeat: -1,
-    ease: "none",
-  });
-
-const addOrbitalRotation = (euler: Euler, orbit: "x" | "y" | "z") =>
-  gsap.to(euler, {
-    [orbit]: -Math.PI * 2,
-    duration: 3,
-    repeat: -1,
-    ease: "none",
-  });
-
 const BasicsScene: FC = () => {
   const guiRef = useRef<GUI | null>(null);
 
@@ -61,7 +42,12 @@ const BasicsScene: FC = () => {
     wireframeMesh,
     pivotGroup,
   }: DebugUiParams) => {
-    const ownRotationTween = addRotation(mesh.rotation);
+    const ownRotationTween = addRotation(mesh.rotation, {
+      x: Math.PI,
+      y: Math.PI,
+      z: Math.PI,
+      duration: 1,
+    });
     if (!props.ownRotation) ownRotationTween.pause();
 
     const orbitalRotationTween = addOrbitalRotation(

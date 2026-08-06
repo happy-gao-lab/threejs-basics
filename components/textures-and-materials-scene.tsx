@@ -2,10 +2,8 @@
 
 import { FC, RefObject, useEffect, useMemo, useRef } from "react";
 import {
-  AmbientLight,
   Color,
   DoubleSide,
-  Euler,
   Group,
   Mesh,
   MeshBasicMaterial,
@@ -18,21 +16,20 @@ import {
   MeshStandardMaterial,
   MeshToonMaterial,
   PerspectiveCamera,
-  PMREMGenerator,
   PointLight,
-  Scene,
   SRGBColorSpace,
   Texture,
   TextureLoader,
   TorusGeometry,
   Vector2,
-  WebGLRenderer,
 } from "three";
-import gsap from "gsap";
 import GUI from "lil-gui";
 import { EXRLoader } from "three/addons/loaders/EXRLoader.js";
-import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
 import useThreeScene from "@/hooks/use-three-scene";
+import { runWhenIdle } from "@/utils/idle";
+import { addRotation } from "@/utils/rotations";
+import { addEnvironment } from "@/utils/environment";
+import { addLights } from "@/utils/lights";
 
 import environmentMap from "@/assets/textures/environment-maps/env-map.hdr";
 
@@ -67,24 +64,6 @@ const torusLabels: Record<number, string> = {
   12: "12: Physical + iridescence",
   13: "13: Physical + transmission",
 };
-
-const runWhenIdle = (callback: () => void) => {
-  if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-    window.requestIdleCallback(callback);
-  } else {
-    setTimeout(callback, 1);
-  }
-};
-
-const addRotation = (euler: Euler) =>
-  gsap.to(euler, {
-    x: -Math.PI,
-    y: Math.PI,
-    z: -Math.PI,
-    duration: 8,
-    repeat: -1,
-    ease: "none",
-  });
 
 // Renders one torus per material/texture concept and returns a lookup of index -> render function.
 // camera/pointLight are only known once useThreeScene's onInit runs, so they're read from refs at call time instead of being passed in directly.
@@ -689,42 +668,14 @@ const TexturesAndMaterialsScene: FC = () => {
 
   const renderers = useTorusRenderers(guiRef, cameraRef, pointLightRef);
 
-  const addLight = () => {
-    const distance = 5;
-    const intensity = 200;
-    const ambientLight = new AmbientLight(0xffffff, 1);
-
-    const pointLightXPos = new PointLight(0xffffff, intensity);
-    pointLightXPos.position.set(distance, 0, 0);
-
-    const group = new Group();
-
-    group.add(ambientLight, pointLightXPos);
-
-    return { group, pointLight: pointLightXPos };
-  };
-
-  const addEnvironment = (
-    scene: Scene,
-    renderer: WebGLRenderer,
-  ) => {
-    const pmremGenerator = new PMREMGenerator(renderer);
-    pmremGenerator.compileEquirectangularShader();
-
-    new HDRLoader().load(environmentMap, (texture) => {
-      const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-
-      scene.environment = envMap;
-      scene.background = envMap;
-
-      texture.dispose();
-      pmremGenerator.dispose();
-    });
-  };
-
   const setupTorusSwitcher = () => {
     const group = new Group();
-    const rotationTween = addRotation(group.rotation);
+    const rotationTween = addRotation(group.rotation, {
+      x: -Math.PI,
+      y: Math.PI,
+      z: -Math.PI,
+      duration: 8,
+    });
 
     // Only one torus exists (geometry/material/textures) at a time — switching disposes the previous one instead of just hiding it, so idle toruses cost nothing.
     let activeMesh: Mesh | null = null;
@@ -797,13 +748,13 @@ const TexturesAndMaterialsScene: FC = () => {
       // The HDR environment map is a multi-MB download plus a PMREM
       // compile — deferring it off the initial frame keeps that work from
       // showing up as a single long blocking task right at startup.
-      runWhenIdle(() => addEnvironment(scene, renderer));
+      runWhenIdle(() => addEnvironment(scene, renderer, environmentMap));
 
-      const { group: lights, pointLight } = addLight();
+      const { group: lights, pointLight1 } = addLights();
       const torusSwitcherGroup = setupTorusSwitcher();
 
       cameraRef.current = camera;
-      pointLightRef.current = pointLight;
+      pointLightRef.current = pointLight1;
 
       scene.add(lights, torusSwitcherGroup);
     },
