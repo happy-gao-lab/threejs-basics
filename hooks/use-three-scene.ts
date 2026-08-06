@@ -7,7 +7,11 @@ import useWindowDimensions from "@/hooks/use-window-dimensions";
 
 interface UseThreeSceneOptions {
   fieldOfView?: number;
-  onInit?: (scene: THREE.Scene, camera: THREE.PerspectiveCamera) => void;
+  onInit?: (
+    scene: THREE.Scene,
+    camera: THREE.PerspectiveCamera,
+    renderer: THREE.WebGLRenderer,
+  ) => void;
 }
 
 const useThreeScene = (
@@ -30,6 +34,7 @@ const useThreeScene = (
 
     // Camera
     cameraRef.current = new THREE.PerspectiveCamera(fieldOfView, 1);
+
     cameraRef.current.position.set(1, 2, 3);
     sceneRef.current.add(cameraRef.current);
 
@@ -44,7 +49,7 @@ const useThreeScene = (
       canvasRef.current,
     );
 
-    onInit?.(sceneRef.current, cameraRef.current);
+    onInit?.(sceneRef.current, cameraRef.current, rendererRef.current);
 
     return () => {
       rendererRef.current?.dispose();
