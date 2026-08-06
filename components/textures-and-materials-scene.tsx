@@ -151,25 +151,22 @@ const useTorusRenderers = (
   const renderTorus3 = () => {
     const props = { matcap: "Metallic" };
 
-    const matcapTexture1 = textureLoader.load(matcap1.src);
-    const matcapTexture2 = textureLoader.load(matcap2.src);
-    const matcapTexture3 = textureLoader.load(matcap3.src);
+    const matcapLabels = ["Metallic", "Pink-Orange", "Heavy Green"];
+    const matcapTextures = [matcap1, matcap2, matcap3].map((matcap) => {
+      const texture = textureLoader.load(matcap.src);
+      texture.colorSpace = SRGBColorSpace;
+      return texture;
+    });
 
-    matcapTexture1.colorSpace = SRGBColorSpace;
-    matcapTexture2.colorSpace = SRGBColorSpace;
-    matcapTexture3.colorSpace = SRGBColorSpace;
-
-    const matcaps: Record<string, Texture> = {
-      Metallic: matcapTexture1,
-      "Pink-Orange": matcapTexture2,
-      "Heavy Green": matcapTexture3,
-    };
+    const matcaps: Record<string, Texture> = Object.fromEntries(
+      matcapLabels.map((label, index) => [label, matcapTextures[index]]),
+    );
 
     const geometry = new TorusGeometry(4, 2);
     const material = new MeshMatcapMaterial();
     const mesh = new Mesh(geometry, material);
 
-    material.matcap = matcapTexture1;
+    material.matcap = matcaps[props.matcap];
 
     // Debug UI
     const folder = guiRef.current?.addFolder(torusLabels[3]);

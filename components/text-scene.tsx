@@ -1,7 +1,19 @@
 "use client";
 
-import { FC, useEffect, useRef } from "react";
-import { MeshNormalMaterial, Mesh, Color } from "three";
+import { FC, useEffect, useMemo, useRef } from "react";
+import {
+  MeshNormalMaterial,
+  Mesh,
+  MeshMatcapMaterial,
+  MeshPhysicalMaterial,
+  Color,
+  TextureLoader,
+  SRGBColorSpace,
+  Texture,
+  AmbientLight,
+  PointLight,
+  Group,
+} from "three";
 import gsap from "gsap";
 import GUI from "lil-gui";
 
@@ -17,13 +29,47 @@ import bitcountFontData from "@/assets/fonts/Bitcount Prop Single_Regular.json";
 import sekuyaFontData from "@/assets/fonts/Sekuya_Regular.json";
 import lavishlyFontData from "@/assets/fonts/Lavishly Yours_Regular.json";
 
+import matcap1 from "@/assets/textures/matcaps/1.png";
+import matcap2 from "@/assets/textures/matcaps/2.png";
+import matcap3 from "@/assets/textures/matcaps/3.png";
+import matcap4 from "@/assets/textures/matcaps/4.png";
+import matcap5 from "@/assets/textures/matcaps/5.png";
+import matcap6 from "@/assets/textures/matcaps/6.png";
+import matcap7 from "@/assets/textures/matcaps/7.png";
+import matcap8 from "@/assets/textures/matcaps/8.png";
+
+const text = "Hello World!";
+
+const defaultProps = {
+  size: 2,
+  depth: 0.5,
+  curveSegments: 5,
+  bevelEnabled: true,
+  bevelThickness: 0.03,
+  bevelSize: 0.02,
+  bevelOffset: 0,
+  bevelSegments: 4,
+};
+
 const TextScene: FC = () => {
   const guiRef = useRef<GUI | null>(null);
   const bitcountFontRef = useRef<Font | null>(null);
   const sekuyaFontRef = useRef<Font | null>(null);
   const lavishlyFontRef = useRef<Font | null>(null);
 
-  const fontLoader = new FontLoader();
+  const fontLoader = useMemo(() => new FontLoader(), []);
+  const textureLoader = useMemo(() => new TextureLoader(), []);
+
+  const addLight = () => {
+    const ambientLight = new AmbientLight(0xffffff, 1);
+    const pointLight = new PointLight(0xffffff, 200);
+    const group = new Group();
+
+    group.add(ambientLight, pointLight);
+    pointLight.position.set(5, 0, 5);
+
+    return group;
+  };
 
   const parseFonts = () => {
     bitcountFontRef.current = fontLoader.parse(
@@ -45,84 +91,79 @@ const TextScene: FC = () => {
     }
   };
 
-  const renderText = (text: string, font: Font, name: string) => {
-    const params = {
-      size: 2,
-      depth: 0.2,
-      curveSegments: 5,
-      bevelEnabled: true,
-      bevelThickness: 0.03,
-      bevelSize: 0.02,
-      bevelOffset: 0,
-      bevelSegments: 4,
+  const renderNormalText = () => {
+    const props = {
+      ...defaultProps,
+      font: lavishlyFontRef.current!,
     };
 
     const material = new MeshNormalMaterial();
-    const geometry = new TextGeometry(text, { font, ...params });
+    const geometry = new TextGeometry(text, props);
     const text3d = new Mesh(geometry, material);
 
     geometry.computeBoundingBox();
     geometry.center();
+    text3d.position.y = 3;
 
     const rebuildGeometry = () => {
       text3d.geometry.dispose();
-      text3d.geometry = new TextGeometry(text, { font, ...params });
+      text3d.geometry = new TextGeometry(text, props);
       text3d.geometry.computeBoundingBox();
       text3d.geometry.center();
     };
 
     // Debug UI
-    const folder = guiRef.current?.addFolder(name);
+    const folder = guiRef.current?.addFolder("Lavishly Yours");
 
     folder?.add(material, "wireframe").name("Toggle wireframe");
     folder
-      ?.add(params, "size")
+      ?.add(props, "size")
       .min(0.1)
       .max(2)
       .step(0.01)
       .name("Size")
       .onFinishChange(rebuildGeometry);
     folder
-      ?.add(params, "depth")
+      ?.add(props, "depth")
       .min(0)
       .max(1)
       .step(0.1)
       .name("Depth")
       .onFinishChange(rebuildGeometry);
     folder
-      ?.add(params, "curveSegments")
+      ?.add(props, "curveSegments")
       .min(1)
       .max(32)
       .step(1)
       .name("Curve segments")
       .onFinishChange(rebuildGeometry);
     folder
-      ?.add(params, "bevelEnabled")
+      ?.add(props, "bevelEnabled")
       .name("Toggle bevel")
       .onFinishChange(rebuildGeometry);
     folder
-      ?.add(params, "bevelThickness")
+      ?.add(props, "bevelThickness")
       .min(0)
       .max(1)
       .step(0.01)
       .name("Bevel thickness")
       .onFinishChange(rebuildGeometry);
     folder
-      ?.add(params, "bevelSize")
+      ?.add(props, "bevelSize")
       .min(0)
       .max(1)
       .step(0.01)
       .name("Bevel size")
       .onFinishChange(rebuildGeometry);
     folder
-      ?.add(params, "bevelOffset")
+      ?.add(props, "bevelOffset")
       .min(-1)
       .max(1)
       .step(0.1)
       .name("Bevel offset")
       .onFinishChange(rebuildGeometry);
     folder
-      ?.add(params, "bevelSegments")
+      ?.add(props, "bevelSegments")
       .min(1)
       .max(16)
       .step(1)
@@ -132,34 +173,119 @@ const TextScene: FC = () => {
     return text3d;
   };
 
+  const renderMatcapText = () => {
+    const matcapTextures = [
+      matcap1,
+      matcap2,
+      matcap3,
+      matcap4,
+      matcap5,
+      matcap6,
+      matcap7,
+      matcap8,
+    ].map((matcap) => {
+      const texture = textureLoader.load(matcap.src);
+      texture.colorSpace = SRGBColorSpace;
+      return texture;
+    });
+
+    const matcaps: Record<string, Texture> = Object.fromEntries(
+      matcapTextures.map((texture, index) => [`Matcap ${index + 1}`, texture]),
+    );
+
+    const props = {
+      ...defaultProps,
+      font: sekuyaFontRef.current!,
+      matcap: "Matcap 1",
+    };
+
+    const material = new MeshMatcapMaterial();
+    const geometry = new TextGeometry(text, props);
+    const text3d = new Mesh(geometry, material);
+
+    geometry.computeBoundingBox();
+    geometry.center();
+    material.matcap = matcaps[props.matcap];
+
+    // Debug UI
+    const folder = guiRef.current?.addFolder("Sekuya");
+
+    folder
+      ?.add(props, "matcap", Object.keys(matcaps))
+      .name("Matcap")
+      .onChange((value: string) => {
+        material.matcap = matcaps[value];
+      });
+
+    return text3d;
+  };
+
+  const renderPhysicalText = () => {
+    const sheenProps = {
+      color: 0x463d76,
+      sheenColor: 0xffffff,
+    };
+
+    const props = {
+      ...defaultProps,
+      font: bitcountFontRef.current!,
+    };
+
+    const material = new MeshPhysicalMaterial();
+    const geometry = new TextGeometry(text, props);
+    const text3d = new Mesh(geometry, material);
+
+    geometry.computeBoundingBox();
+    geometry.center();
+    text3d.position.y = -3;
+
+    material.sheen = 1;
+    material.sheenRoughness = 0.25;
+    material.sheenColor.set(1, 1, 1);
+    material.color = new Color(sheenProps.color);
+
+    // Debug UI
+    const folder = guiRef.current?.addFolder("Bitcount");
+
+    folder
+      ?.addColor(sheenProps, "color")
+      .name("Color")
+      .onChange(() => {
+        material.color.set(sheenProps.color);
+      });
+    folder?.add(material, "sheen").name("Sheen").min(0).max(1).step(0.01);
+    folder
+      ?.add(material, "sheenRoughness")
+      .name("Sheen Roughness")
+      .min(0)
+      .max(1)
+      .step(0.01);
+    folder
+      ?.addColor(sheenProps, "sheenColor")
+      .name("Sheen Color")
+      .onChange(() => {
+        material.sheenColor.set(sheenProps.sheenColor);
+      });
+
+    return text3d;
+  };
+
   const { canvasRef } = useThreeScene({
     fieldOfView: 75,
     onInit: (scene, camera) => {
       camera.position.z = 10;
+      scene.background = new Color(0xffdd00);
+
       guiRef.current = new GUI({ width: 300, title: "3D text" });
 
       parseFonts();
 
-      const bitcountText = renderText(
-        "Hello World!",
-        bitcountFontRef.current!,
-        "Bitcount",
-      );
-      const sekuyaText = renderText(
-        "Hello World!",
-        sekuyaFontRef.current!,
-        "Sekuya",
-      );
-      const lavishlyText = renderText(
-        "Hello World!",
-        lavishlyFontRef.current!,
-        "Lavishly Yours",
-      );
+      const lavishlyText = renderNormalText();
+      const sekuyaText = renderMatcapText();
+      const bitcountText = renderPhysicalText();
+      const lightsGroup = addLight();
 
-      bitcountText.position.y = 3;
-      lavishlyText.position.y = -3;
-
-      scene.add(bitcountText, sekuyaText, lavishlyText);
+      scene.add(lavishlyText, sekuyaText, bitcountText, lightsGroup);
     },
   });
 
